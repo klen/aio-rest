@@ -138,10 +138,10 @@ class Endpoint(metaclass=EndpointMeta):
         method = getattr(self, request.method.lower())
         params = self.api.get_params(request)
 
-        await self.authorize(request, **params)
-        self.collection = await self.get_many(request, **params)
-
         try:
+            await self.authorize(request, **params)
+            self.collection = await self.get_many(request, **params)
+
             if request.method == 'POST':
                 return await method(request, **params)
 
@@ -270,6 +270,7 @@ class Endpoint(metaclass=EndpointMeta):
         """Delete a resource."""
         if resource is None:
             raise APINotFound(reason='Resource Not Found')
+
         self.collection.remove(resource)
 
 

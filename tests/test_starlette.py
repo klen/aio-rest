@@ -3,7 +3,7 @@ from starlette.testclient import TestClient
 
 
 def test_base():
-    from rest import API, Endpoint
+    from rest import API, Endpoint, APIUnauthorized
 
     api = API('/api/v1')
     client = TestClient(api.router)
@@ -34,7 +34,12 @@ def test_base():
             class Schema(ma.Schema):
                 id = ma.fields.Integer()
 
-        def get_many(self, request, **kwargs):
+        async def authorize(self, request, **kwargs):
+            anon = request.query_params.get('anonymous')
+            if anon:
+                raise APIUnauthorized()
+
+        async def get_many(self, request, **kwargs):
             return collection
 
         async def get_one(self, request, **kwargs):
@@ -44,6 +49,9 @@ def test_base():
 
         async def post(self, request, **kwargs):
             return await self.load(request, **kwargs)
+
+    res = client.get('/range?anonymous=1')
+    assert res.status_code == 401
 
     res = client.get('/range?some=22')
     assert res.status_code == 200
