@@ -167,9 +167,8 @@ class Endpoint(metaclass=EndpointMeta):
                         per_page = int(per_page)
                         page = int(query.get(PAGE_QUERY, 0))
                         if per_page and page >= 0:
-                            offset = page * per_page
                             self.collection, total = await self.paginate(
-                                request, offset=offset, limit=per_page)
+                                request, page=page, per_page=per_page)
                             self.headers = make_pagination_headers(per_page, page, total)
 
                     except ValueError:
@@ -203,15 +202,16 @@ class Endpoint(metaclass=EndpointMeta):
         """Sort the current collection. Just placeholder for the heirs."""
         return self.collection
 
-    async def paginate(self, request, *, offset=0, limit=0, **params):
+    async def paginate(self, request, *, page=0, per_page=0, **params):
         """Paginate collection.
 
         :param request: client's request
-        :param offset: current offset
-        :param limit: limit items per page
+        :param page: current page
+        :param per_page: limit items per page
         :returns: (paginated collection, count of resources)
         """
-        return self.collection[offset: offset + limit], len(self.collection)
+        offset = page * per_page
+        return self.collection[offset: offset + per_page], len(self.collection)
 
     async def dump(self, request, data, *, many=..., **params):
         """Serialize the given response."""
