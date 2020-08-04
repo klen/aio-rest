@@ -2,6 +2,7 @@ from abc import ABCMeta
 import json
 import inspect
 import math
+import marshmallow as ma
 
 from .exceptions import APINotFound, APIBadRequest, APIException
 from .filters import Filters
@@ -217,7 +218,7 @@ class Endpoint(metaclass=EndpointMeta):
         if many is ...:
             many = isinstance(data, (list, tuple, set))
 
-        return schema.dump(data, many=many).data if schema else data
+        return schema.dump(data, many=many) if schema else data
 
     async def load(self, request, resource=None, **params):
         """Load data from request and create/update a resource."""
@@ -230,10 +231,11 @@ class Endpoint(metaclass=EndpointMeta):
         if not schema:
             return data
 
-        resource, errors = schema.load(
-            data, partial=resource is not None, many=isinstance(data, list))
-        if errors:
-            raise APIBadRequest(reason='Invalid data', errors=errors)
+        try:
+            resource = schema.load(
+                data, partial=resource is not None, many=isinstance(data, list))
+        except ma.ValidationError as exc:
+            raise APIBadRequest(reason='Invalid data', errors=exc.messages)
 
         return resource
 

@@ -60,7 +60,7 @@ class Filter:
 
     def apply(self, collection, ops, **kwargs):
         """Apply the filter to collection."""
-        validator = lambda obj: all(op(obj, val) for (op, val) in ops)  # noqa
+        validator = lambda obj: all(op(get_value(obj, self.name), val) for (op, val) in ops)  # noqa
         return [o for o in collection if validator(o)]
 
 
@@ -106,3 +106,11 @@ class Filters:
             filters[f.name] = ops
 
         return filters, collection
+
+
+def get_value(obj, name):
+    """Get value from object by name."""
+    if isinstance(obj, dict):
+        return obj.get(name)
+
+    return getattr(obj, name, obj)

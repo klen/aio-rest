@@ -1,3 +1,4 @@
+import marshmallow as ma
 from starlette.testclient import TestClient
 
 
@@ -20,15 +21,18 @@ def test_base():
     assert res.status_code == 200
     assert res.json() == 'Hello Tests!'
 
-    collection = list(range(99))
+    collection = [{'id': n} for n in range(99)]
 
     @api.register
     class Range(Endpoint):
 
         class Meta:
             methods = 'get', 'post', 'delete'
-            filters = 'num',
+            filters = 'id',
             per_page = 3
+
+            class Schema(ma.Schema):
+                id = ma.fields.Integer()
 
         def get_many(self, request, **kwargs):
             return collection
@@ -45,22 +49,22 @@ def test_base():
     assert res.status_code == 200
     assert res.headers['x-total-count'] == '99'
     assert res.headers['x-limit'] == '3'
-    assert res.json() == [0, 1, 2]
+    assert res.json() == [{'id': 0}, {'id': 1}, {'id': 2}]
 
     res = client.get('/range?page=1')
-    assert res.json() == [3, 4, 5]
+    assert res.json() == [{'id': 3}, {'id': 4}, {'id': 5}]
 
-    res = client.get('/range?where={"num":1}')
+    res = client.get('/range?where={"id":1}')
     assert res.status_code == 200
-    assert res.json() == [1]
+    assert res.json() == [{'id': 1}]
 
-    res = client.get('/range?where={"num":{"$gt":3}}')
+    res = client.get('/range?where={"id":{"$gt":3}}')
     assert res.status_code == 200
-    assert res.json() == [4, 5, 6]
+    assert res.json() == [{'id': 4}, {'id': 5}, {'id': 6}]
 
     res = client.get('/range/2')
     assert res.status_code == 200
-    assert res.json() == 2
+    assert res.json() == {'id': 2}
 
     res = client.get('/range/?sort=2')
     assert res.status_code == 200
@@ -69,7 +73,13 @@ def test_base():
     res = client.put('/range')
     assert res.status_code == 405
 
-    res = client.post('/range', data='{"test": "passed"}')
+    res = client.post('/range', json={"test": "passed"})
+    assert res.status_code == 400
+    json = res.json()
+    assert json
+    assert json['errors']
+
+    res = client.post('/range', json={"id": 7})
     assert res.status_code == 200
 
     res = client.delete('/range')
