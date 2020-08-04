@@ -168,7 +168,8 @@ class Endpoint(metaclass=EndpointMeta):
                         page = int(query.get(PAGE_QUERY, 0))
                         if per_page and page >= 0:
                             offset = page * per_page
-                            self.collection, total = await self.paginate(request, offset, per_page)
+                            self.collection, total = await self.paginate(
+                                request, offset=offset, limit=per_page)
                             self.headers = make_pagination_headers(per_page, page, total)
 
                     except ValueError:
@@ -202,7 +203,7 @@ class Endpoint(metaclass=EndpointMeta):
         """Sort the current collection. Just placeholder for the heirs."""
         return self.collection
 
-    async def paginate(self, request, offset=0, limit=0, **params):
+    async def paginate(self, request, *, offset=0, limit=0, **params):
         """Paginate collection.
 
         :param request: client's request
@@ -212,7 +213,7 @@ class Endpoint(metaclass=EndpointMeta):
         """
         return self.collection[offset: offset + limit], len(self.collection)
 
-    async def dump(self, request, data, many=..., **params):
+    async def dump(self, request, data, *, many=..., **params):
         """Serialize the given response."""
         schema = await self.get_schema(request, **params)
         if many is ...:
@@ -220,7 +221,7 @@ class Endpoint(metaclass=EndpointMeta):
 
         return schema.dump(data, many=many) if schema else data
 
-    async def load(self, request, resource=None, **params):
+    async def load(self, request, *, resource=None, **params):
         """Load data from request and create/update a resource."""
         try:
             data = await self.api.get_data(request)
@@ -239,24 +240,24 @@ class Endpoint(metaclass=EndpointMeta):
 
         return resource
 
-    async def save(self, request, resource=None, **params):
+    async def save(self, request, *, resource=None, **params):
         """Save the given resource. Just placeholder for the heirs."""
         return resource
 
-    async def get(self, request, resource=None, **params):
+    async def get(self, request, *, resource=None, **params):
         """Get resource or collection of resources"""
         if resource is not None and resource != '':
             return self.dump(request, resource, **params)
 
         return self.dump(request, self.collection, many=True, **params)
 
-    async def post(self, request, resource=None, **params):
+    async def post(self, request, *, resource=None, **params):
         """Create a resource."""
         resource = await self.load(request, resource=resource, **params)
         resource = await self.save(request, resource=resource, **params)
         return self.dump(request, resource, many=isinstance(resource, list), **params)
 
-    async def put(self, request, resource=None, **params):
+    async def put(self, request, *, resource=None, **params):
         """Update a resource."""
         if self.resource is None:
             raise APINotFound(reason='Resource Not Found')
@@ -265,7 +266,7 @@ class Endpoint(metaclass=EndpointMeta):
 
     patch = put
 
-    async def delete(self, request, resource=None, **kwargs):
+    async def delete(self, request, *, resource=None, **kwargs):
         """Delete a resource."""
         if resource is None:
             raise APINotFound(reason='Resource Not Found')
