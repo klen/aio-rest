@@ -1,12 +1,48 @@
+import pytest
 import marshmallow as ma
 from starlette.testclient import TestClient
 
 
-def test_base():
-    from rest import API, Endpoint, APIUnauthorized
+@pytest.fixture
+def api():
+    from rest import API
 
-    api = API('/api/v1')
-    client = TestClient(api.router)
+    return API('/api/v1')
+
+
+@pytest.fixture
+def client(api):
+    return TestClient(api.router)
+
+
+def test_simple_views(api, client):
+
+    @api.register('/sync', methods=('get', 'post'))
+    def sync_func(request, **params):
+        return 'SYNC OK'
+
+    @api.register('/async')
+    async def async_func(request, **params):
+        return 'ASYNC OK'
+
+    res = client.get('/sync')
+    assert res.status_code == 200
+    assert res.json() == 'SYNC OK'
+
+    res = client.post('/sync')
+    assert res.status_code == 200
+    assert res.json() == 'SYNC OK'
+
+    res = client.delete('/sync')
+    assert res.status_code == 405
+
+    res = client.get('/async')
+    assert res.status_code == 200
+    assert res.json() == 'ASYNC OK'
+
+
+def test_resources(api, client):
+    from rest import Endpoint, APIUnauthorized
 
     @api.register
     class Hello(Endpoint):

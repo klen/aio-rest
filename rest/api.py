@@ -2,6 +2,7 @@ import inspect
 
 from .backends import BACKENDS
 from .endpoint import Endpoint
+from .utils import to_coroutine
 
 
 class API:
@@ -15,13 +16,24 @@ class API:
 
     def register(self, endpoint, *paths, methods=None):
         """Register given resource with given params."""
-        if not (inspect.isclass(endpoint) and issubclass(endpoint, Endpoint)):
+        if isinstance(endpoint, str):
             paths = [endpoint] + list(paths)
 
             def wrapper(endpoint):
                 self.register(endpoint, *paths, methods=methods)
 
             return wrapper
+
+        if not (inspect.isclass(endpoint) and issubclass(endpoint, Endpoint)):
+            view = to_coroutine(endpoint)
+            methods = methods or ['get']
+
+            async def abstract(handler, *args, **kwargs):
+                return view(*args, **kwargs)
+
+            params = {method.lower(): abstract for method in methods}
+            params['methods'] = methods
+            endpoint = type(view.__name__, (Endpoint,), params)
 
         methods = methods or endpoint.opts.methods
         if not paths:

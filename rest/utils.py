@@ -1,4 +1,5 @@
 import asyncio as aio
+from functools import wraps
 
 
 def to_coroutine(func):
@@ -6,6 +7,7 @@ def to_coroutine(func):
     if aio.iscoroutinefunction(func):
         return func
 
+    @wraps(func)
     async def awaitable(*args, **kwargs):
         return func(*args, **kwargs)
 
