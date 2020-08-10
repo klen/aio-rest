@@ -8,7 +8,7 @@ $(VIRTUAL_ENV): $(CURDIR)/requirements.txt
 	@$(VIRTUAL_ENV)/bin/pip install -r requirements.txt
 	@touch $(VIRTUAL_ENV)
 
-$(VIRTUAL_ENV)/bin/pytest: $(VIRTUALENV) $(CURDIR)/requirements-tests.txt
+$(VIRTUAL_ENV)/bin/pytest: $(VIRTUAL_ENV) $(CURDIR)/requirements-tests.txt
 	@$(VIRTUAL_ENV)/bin/pip install -r requirements-tests.txt
 
 .PHONY: version
