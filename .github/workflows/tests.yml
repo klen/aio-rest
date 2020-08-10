@@ -33,7 +33,7 @@ jobs:
 
     - name: Setup requirements
       run: |
-        [[ -d env ]] || (pip install virtualenv && virtualenv --python=python3 env && env/bin/pip install -r requirements.txt)
+        [[ -d env ]] || (pip install virtualenv && virtualenv --python=python3 env && env/bin/pip install -r requirements-tests.txt)
         touch env
 
     - name: Test with pytest

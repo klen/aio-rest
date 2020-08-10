@@ -58,4 +58,4 @@ upload: clean
 
 .PHONY: test
 test t: $(VIRTUAL_ENV)/bin/pytest
-	@pytest tests
+	@$(VIRTUAL_ENV)/bin/pytest tests
