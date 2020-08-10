@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
     - name: Checkout changes
       uses: actions/checkout@v2
 
@@ -23,6 +24,17 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
+
+    - name: Use cache
+      uses: actions/cache@v2
+      with:
+        path: env
+        key: env-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+
+    - name: Setup requirements
+      run: |
+        [[ -d env ]] || (pip install virtualenv && virtualenv --python=python3 env && env/bin/pip install -r requirements.txt)
+        touch env
 
     - name: Test with pytest
       run: |
